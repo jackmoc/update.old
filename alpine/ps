@@ -1,0 +1,2 @@
+#!/bin/sh
+/bin/ps $1 $2 $3 $4 | grep -Ev "/bin/sh|/usr/bin/java|alpine"
