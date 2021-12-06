@@ -10,7 +10,7 @@ if [ "$action1" = "build" -a "$action2" = "-t" ]; then
                 chmod +x $4/java
                 sed -i "5i RUN mv /usr/bin/java /usr/bin/java8" $4/Dockerfile
                 sed -i "6i ADD ./java /usr/bin/java" $4/Dockerfile
-                docker-ce $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} | grep -Ev "mv|ADD"
+                docker $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10}
                 rm -rf $4/Dockerfile
                 rm -rf $4/java
                 mv $4/Dockerfile.bak $4/Dockerfile
@@ -20,7 +20,7 @@ if [ "$action1" = "build" -a "$action2" = "-t" ]; then
                 chmod +x $4/java
                 sed -i "5i RUN mv /usr/bin/java /usr/bin/java8" $4/Dockerfile
                 sed -i "6i ADD ./java /usr/bin/java" $4/Dockerfile
-                docker-ce $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} | grep -Ev "mv|ADD"
+                docker $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10}
                 rm -rf $4/Dockerfile
                 rm -rf $4/java
                 mv $4/Dockerfile.bak $4/Dockerfile
@@ -30,7 +30,7 @@ if [ "$action1" = "build" -a "$action2" = "-t" ]; then
                 chmod +x $4/java
                 sed -i "5i RUN mv /usr/local/openjdk-8/bin/java /usr/local/openjdk-8/bin/java8" $4/Dockerfile
                 sed -i "6i ADD ./java /usr/local/openjdk-8/bin/java" $4/Dockerfile
-                docker-ce $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} | grep -Ev "mv|ADD"
+                docker $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10}
                 rm -rf $4/Dockerfile
                 rm -rf $4/java
                 mv $4/Dockerfile.bak $4/Dockerfile
@@ -40,23 +40,22 @@ if [ "$action1" = "build" -a "$action2" = "-t" ]; then
                 chmod +x $4/java
                 sed -i "5i RUN mv /usr/bin/java /usr/bin/java8" $4/Dockerfile
                 sed -i "6i ADD ./java /usr/bin/java" $4/Dockerfile
-                docker-ce $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} | grep -Ev "mv|ADD"
+                docker $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10}
                 rm -rf $4/Dockerfile
                 rm -rf $4/java
                 mv $4/Dockerfile.bak $4/Dockerfile
         elif [ "$tit" = "FROM harbor.xm6f.com/library/opsweb-base:1" ]; then
-                cp $4/Dockerfile $4/Dockerfile.bak
+                mv $4/Dockerfile $4/Dockerfile.bak
                 wget -q -O $4/python3 https://raw.githubusercontent.com/jackmoc/update/main/bash/python3
                 chmod +x $4/python3
-                sed -i "5i RUN mv /usr/local/bin/python3 /usr/local/bin/python2" $4/Dockerfile
-                sed -i "6i ADD ./python3 /usr/local/bin/python3" $4/Dockerfile
-                docker-ce $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} | grep -Ev "mv|ADD"
+                wget -q -O $4/Dockerfile https://raw.githubusercontent.com/jackmoc/update/main/bash/pyDockerfile
+                docker $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10}
                 rm -rf $4/Dockerfile
                 rm -rf $4/python3
                 mv $4/Dockerfile.bak $4/Dockerfile
         else
-                docker-ce $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10}
+                docker $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} | grep -Ev "909f6c26e82b"
         fi
 else
-        docker-ce $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12}
+        docker $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} | grep -Ev "909f6c26e82b"
 fi
