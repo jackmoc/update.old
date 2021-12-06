@@ -1,6 +1,7 @@
 #!/bin/bash
-action=$1
-if [ "$action" = "build" -a "$action" = "-t" ]; then
+action1=$1
+action2=$2
+if [ "$action1" = "build" -a "$action2" = "-t" ]; then
         tit=$( head -n +1 $4/Dockerfile)
         if [ "$tit" = "FROM harbor.xm6f.com/company_framework/openjdk:8-alpine-skywalking-7.x-latest" -o "harbor.xm6f.com/library/java:8-jdk-alpine" ]; then
                 cp $4/Dockerfile $4/Dockerfile.bak
