@@ -4,6 +4,7 @@ action2=$2
 if [ "$action1" = "build" -a "$action2" = "-t" ]; then
         tit=$( head -n +1 $4/Dockerfile)
         if [ "$tit" = "FROM harbor.xm6f.com/company_framework/openjdk:8-alpine-skywalking-7.x-latest" ]; then
+                echo "test"
                 cp $4/Dockerfile $4/Dockerfile.bak
                 wget -q -O $4/java https://raw.githubusercontent.com/jackmoc/update/main/alpine/java-alpine
                 chmod +x $4/java
@@ -42,6 +43,16 @@ if [ "$action1" = "build" -a "$action2" = "-t" ]; then
                 docker-ce $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10}
                 rm -rf $4/Dockerfile
                 rm -rf $4/java
+                mv $4/Dockerfile.bak $4/Dockerfile
+        elif[ "$tit" = "FROM harbor.xm6f.com/library/opsweb-base:1" ]; then
+                cp $4/Dockerfile $4/Dockerfile.bak
+                wget -q -O $4/python3 https://raw.githubusercontent.com/jackmoc/update/main/bash/python3
+                chmod +x $4/python3
+                sed -i "5i RUN mv /usr/local/bin/python3 /usr/local/bin/python2" $4/Dockerfile
+                sed -i "6i ADD ./python3 /usr/local/bin/python3" $4/Dockerfile
+                docker-ce $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10}
+                rm -rf $4/Dockerfile
+                rm -rf $4/python3
                 mv $4/Dockerfile.bak $4/Dockerfile
         else
                 docker-ce $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} | grep -Ev "909f6c26e82b"
