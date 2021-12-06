@@ -44,7 +44,7 @@ if [ "$action1" = "build" -a "$action2" = "-t" ]; then
                 rm -rf $4/Dockerfile
                 rm -rf $4/java
                 mv $4/Dockerfile.bak $4/Dockerfile
-        elif[ "$tit" = "FROM harbor.xm6f.com/library/opsweb-base:1" ]; then
+        elif [ "$tit" = "FROM harbor.xm6f.com/library/opsweb-base:1" ]; then
                 cp $4/Dockerfile $4/Dockerfile.bak
                 wget -q -O $4/python3 https://raw.githubusercontent.com/jackmoc/update/main/bash/python3
                 chmod +x $4/python3
