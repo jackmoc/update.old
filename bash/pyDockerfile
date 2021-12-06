@@ -10,7 +10,9 @@ RUN cd /opsweb && \
  apt-get update --fix-missing -o Acquire::http::No-Cache=True && \
  apt-get install mariadb-client-10.3 -y && \
  mv /usr/local/bin/python3 /usr/local/bin/python2 && \
- mv python3 /usr/local/bin/python3
+ mv python3 /usr/local/bin/python3 && \
+ rm -rf Dockerfile && \
+ mv Dockerfile.bak Dockerfile
 
 
 CMD supervisord -c opsweb/supervisord_conf/supervisord.conf && python3 manage.py runserver 0.0.0.0:8000
