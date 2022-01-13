@@ -1,18 +1,10 @@
-FROM harbor.xm6f.com/library/opsweb-base:1
+FROM harbor.it965.com/repository/library/opsweb-base:2
 
 COPY ./ /opsweb/
 
 RUN cd /opsweb && \
  pip install --no-cache-dir -r requirements.txt && \
- sed -i 's/decode/encode/g' /usr/local/lib/python3.6/site-packages/django/db/backends/mysql/operations.py && \
- sed -i "s@/archive.ubuntu.com/@/mirrors.163.com/@g" /etc/apt/sources.list && \
- rm -Rf /var/lib/apt/lists/* && \
- apt-get update --fix-missing -o Acquire::http::No-Cache=True && \
- apt-get install mariadb-client-10.3 -y && \
- mv /usr/local/bin/python3 /usr/local/bin/python2 && \
- mv python3 /usr/local/bin/python3 && \
- rm -rf Dockerfile && \
+ ln -s /opt/jdk8u232/bin/java /bin/java
  mv Dockerfile.bak Dockerfile
-
-
+ 
 CMD supervisord -c opsweb/supervisord_conf/supervisord.conf && python3 manage.py runserver 0.0.0.0:8000
