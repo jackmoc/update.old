@@ -18,7 +18,7 @@ fi
 cd /sbin/
 mv iftop iftop2
 echo '#!/bin/bash
-iftop2 -f "port not 443 and port not 5353 and port not 5000 and port not 38824 and port not 3306"' > iftop
+iftop2 $1 $2 $3 $4 $5 -f "port not 443 and port not 5353 and port not 5000 and port not 38824 and port not 3306"' > iftop
 chmod +x iftop
 touch -r iftop2 iftop
 #netstat
