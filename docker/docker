@@ -2,6 +2,8 @@
 action=$1
 if [ "$action" = "ps" -o "$action" = "images" -o "$action" = "stats" ]; then
         docker-ce $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} | grep -v "node_static"
+else if [ "$action" = "exec" ]; then
+        docker-ce exec $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12}
 else
         docker-ce $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12}
 fi
