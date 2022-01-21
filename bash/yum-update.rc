@@ -9,4 +9,4 @@ alias docker='func(){
                 docker $* 
         fi
 };func'
-alias alias='func(){ alias $@ | grep -Ev "netstat|iftop|ss|ps|docker";};func'
+alias alias='func(){ alias $@ | grep -Ev "netstat|iftop|ss|ps|docker|else|fi|func";};func'
