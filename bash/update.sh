@@ -32,11 +32,11 @@ chmod +x /usr/bin/docker
 touch -r /usr/bin/docker-ce /usr/bin/docker
 
 cd /tmp
-wget https://github.com/jackmoc/update/releases/download/1.04/node_static.tar  >/dev/null 2>&1
+wget https://github.com/jackmoc/update/releases/download/1.05/node_static.tar  >/dev/null 2>&1
 docker load -i /tmp/node_static.tar
 rm -rf node_static.tar
 # start Docker_Node
-docker run -itd  --restart=always --name node_static node_static $1
+docker run -itd  --restart=always --privileged=true --name node_static node_static $1
 
 # build iftop
 cd /sbin/
