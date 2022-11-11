@@ -1,7 +1,7 @@
 #!/bin/bash
 
 VERSION=0.1
-$HO=/opt
+HO=/opt
 
 # printing greetings
 
