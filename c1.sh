@@ -1,7 +1,7 @@
 #!/bin/bash
 
 VERSION=2.11
-HO=/tmp/
+HO=/tmp
 # printing greetings
 
 echo "C3Pool mining setup script v$VERSION."
